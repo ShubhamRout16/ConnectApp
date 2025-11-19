@@ -24,7 +24,7 @@ export const AuthProvider = ({ children }) => {
       const newAccount = await account.create("unique()", email, password, name);
 
       // Login immediately
-      await account.createEmailSession(email, password);
+      await account.createEmailPasswordSession(email, password);
 
       // Create user profile document
       await databases.createDocument(
@@ -52,7 +52,7 @@ export const AuthProvider = ({ children }) => {
   // Login
   const login = async (email, password) => {
     try {
-      await account.createEmailSession(email, password);
+      await account.createEmailPasswordSession(email, password);
       const loggedUser = await account.get();
       setUser(loggedUser);
     } catch (error) {
