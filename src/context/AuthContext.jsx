@@ -52,6 +52,8 @@ export const AuthProvider = ({ children }) => {
   // Login
   const login = async (email, password) => {
     try {
+      // ensuring no session exists before this
+      await account.deleteSession("current").catch(() => {});
       await account.createEmailPasswordSession(email, password);
       const loggedUser = await account.get();
       setUser(loggedUser);
