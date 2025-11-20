@@ -4,7 +4,7 @@ import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import ProtectedRoute from "./components/ProtectedRoute";
-
+import AppLayout from "./layout/AppLayout";
 function App() {
   return (
     <AuthProvider>
@@ -18,7 +18,9 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Home/>
+              <AppLayout>
+                <Home/>
+              </AppLayout>
             </ProtectedRoute>
           }
         />
