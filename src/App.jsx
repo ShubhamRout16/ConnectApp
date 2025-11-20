@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layout/AppLayout";
+import CreatePost from "./pages/CreatePost";
 function App() {
   return (
     <AuthProvider>
@@ -27,6 +28,16 @@ function App() {
 
         {/* more protected routes */}
         {/* create Post page route */}
+        <Route
+          path="/create-post"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <CreatePost/>
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
         {/* profile page route */}
       </Routes>
     </AuthProvider>
