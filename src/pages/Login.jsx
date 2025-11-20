@@ -1,11 +1,20 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/useAuth"
 import { useNavigate } from "react-router-dom";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
+  
+  // logic to prevent the logged in users from the signup and login page
+  const { user } = useAuth();
 
+  useEffect(() => {
+    if(user){
+      navigate("/");
+    }
+  },[user , navigate]);
+ 
   const [form, setForm] = useState({
     email: "",
     password: "",
