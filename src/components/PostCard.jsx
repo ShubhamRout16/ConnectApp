@@ -1,8 +1,24 @@
 import { getImagePreview } from "@/lib/postService";
 import { useEffect, useState } from "react";
+import { toggleLike } from "@/lib/postService";
+import { useAuth } from "@/context/useAuth";
 
 export default function PostCard({ post }) {
   const [imageUrl , setImageUrl] = useState("");
+
+  // for the like feature
+  const { user } = useAuth();
+  const [likes , setLikes] = useState(post.likes || []);
+  const isLiked = likes.includes(user.$id);
+
+  const handleLike = async () => {
+    try {
+      const updated = await toggleLike(post.$id , user.$id , likes);
+      setLikes(updated.likes);
+    } catch(err) {
+      console.log("Like error : " , err);
+    }
+  };
 
   useEffect(() => {
     async function loadImage() {
@@ -29,6 +45,16 @@ export default function PostCard({ post }) {
       
       {/* caption */}
       <p className="text-gray-300 mb-2">{post.caption}</p>
+
+      <button 
+        onClick={handleLike}
+        className={`flex items-center gap-2 px-3 py-1 rounded-full 
+        transition-all ${isLiked ? "bg-purple-600/30 text-purple-300" : "text-gray-400 hover:text-purple-300"}`}
+      >
+      <span className="text-lg">{isLiked ? "💜" : "🤍"}</span>
+      <span>{likes.length}</span>
+      </button>
+
 
       {/* Meta */}
       <div className="text-sm text-gray-500 flex justify-between">

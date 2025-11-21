@@ -49,3 +49,25 @@ export const getAllPosts = async () => {
     ]
   );
 };
+
+// for like feature
+export async function toggleLike(postId , userId , currentLikes) {
+  let updatedLikes;
+
+  if (currentLikes.includes(userId)) {
+    // unlike
+    updatedLikes = currentLikes.filter(id => id !== userId);
+  }else{
+    // likes
+    updatedLikes = [...currentLikes , userId];
+  }
+
+  return await databases.updateDocument(
+    import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
+    postId , 
+    {
+      likes: updatedLikes
+    }
+  );
+}
