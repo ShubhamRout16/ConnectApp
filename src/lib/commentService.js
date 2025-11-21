@@ -33,3 +33,34 @@ export async function getComments(postId){
     ]
   );
 }
+
+// delete comment feature
+export async function deleteComment(commentId){
+  try {
+    await databases.deleteDocument(
+      DATABASE_ID,
+      COMMENTS_COLLECTION_ID,
+      commentId
+    );
+    return true;
+  }catch(err) {
+    console.log("Delete comment error : ",err);
+    throw err;
+  }
+}
+
+// edit comment feature
+export async function editComment(commentId , newText){
+  try {
+    const updated = await databases.updateDocument(
+      DATABASE_ID,
+      COMMENTS_COLLECTION_ID,
+      commentId,
+      { text: newText }
+    );
+    return updated;
+  }catch (err){
+    console.log("Edit comment error : ", err);
+    throw err;
+  }
+}
