@@ -2,8 +2,9 @@ import { getImagePreview } from "@/lib/postService";
 import { useEffect, useState } from "react";
 import { toggleLike } from "@/lib/postService";
 import { useAuth } from "@/context/useAuth";
-import { getComments , createComment} from "@/lib/commentService";
+import { getComments , createComment, deleteComment , updateComment} from "@/lib/commentService";
 import CommentMenu from "./commentMenu";
+import CommentItem from "./CommentItem";
 
 export default function PostCard({ post }) {
   const [imageUrl , setImageUrl] = useState("");
@@ -17,6 +18,7 @@ export default function PostCard({ post }) {
   const [comments , setComments] = useState([]);
   const [commentText , setCommentText] = useState("");
   const [showComments , setShowComments] = useState(false);
+  const [replyTo , setReplyTo] = useState(null);
 
   useEffect(() => {
     async function loadComments() {
@@ -26,16 +28,26 @@ export default function PostCard({ post }) {
     loadComments();
   } , [post.$id]); 
 
-  const handleAddComment = async () => {
+  const handleAddComment = async (parentId = null) => {
     if(!commentText.trim()) return;
 
-    try {
-      const newComment = await createComment(post.$id , user , commentText);
-      setComments(prev => [newComment , ...prev]);
-      setCommentText("");
-    } catch (err) {
-      console.log("Comment error : ", err);
-    }
+    const newC = await createComment(post.$id , user , commentText , parentId);
+    setComments(prev => [...prev, newC]);
+    setCommentText("");
+    setReplyTo(null);
+  };
+
+  // delete comment persistent
+  const handleDeleteComment = async (id) =>{
+    await deleteComment(id);
+    setComments((prev) => prev.filter((c) => c.$id !== id));
+  }
+
+  // edit comment persistent
+  const handleEditComment = async (updated) => {
+    const saved = await updateComment(updated.$id , updated.text);
+
+    setComments((prev) => prev.map((c) => (c.$id === saved.$id ? saved : c)));
   };
 
   const handleLike = async () => {
@@ -56,6 +68,30 @@ export default function PostCard({ post }) {
 
     if (post.imageId) loadImage();
   }, [post.imageId]);
+
+  // building the nested comment feature
+  function buildCommentTree(comments){
+    const map = {};
+    const roots = [];
+
+    // initialising the map
+    comments.forEach(c => {
+      map[c.$id] = {...c , replies: []};
+    });
+
+    // build tree
+    comments.forEach(c => {
+      if(c.parentId){
+        map[c.parentId].replies.push(map[c.$id]);
+      }else {
+        roots.push(map[c.$id]);
+      }
+    });
+
+    return roots;
+  }
+
+  const commentTree = buildCommentTree(comments);
   
   return (
     <div className="bg-white/5 backdrop-blue-xl rounded-xl p-4 border border-white/10 shadow-xl"> 
@@ -101,51 +137,35 @@ export default function PostCard({ post }) {
         className="flex-1 px-3 py-2 rounded bg-black/30 text-white outline-none"
       />
       <button
-        onClick={handleAddComment}
+        onClick={() => handleAddComment(replyTo)}
         className="px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded text-white"
       >
         Post
       </button>
     </div>
 
-    {/* Comment List */}
-    <div className="space-y-4">
-      {comments.map((c) => (
-        <div
-          key={c.$id}
-          className="p-3 rounded-lg bg-black/20 border border-white/10 relative"
+    {replyTo && (
+      <div className="text-sm text-violet-300 mb-2">
+        Replying to comment #{replyTo} 
+        <button
+          className="ml-2 text-red-400"
+          onClick={() => setReplyTo(null)}
         >
-          {/* 3 dot menu */}
-          <CommentMenu
-            comment={c}
-            onDelete={(id) => {
-              setComments((prev) => prev.filter((x) => x.$id !== id));
-            }}
-            onEdit={(updatedComment) => {
-              setComments((prev) =>
-                prev.map((item) =>
-                  item.$id === updatedComment.$id ? updatedComment : item
-                )
-              );
-            }}
-          />
+          Cancel
+        </button>
+      </div>
+    )}
 
-          {/* user info */}
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-violet-500 rounded-full flex items-center justify-center text-white text-xs">
-              {c.username[0]}
-            </div>
-            <div>
-              <p className="font-semibold text-sm text-white">{c.username}</p>
-              <p className="text-gray-400 text-xs">
-                {new Date(c.createdAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-
-          {/* comment text */}
-          <p className="mt-2 text-gray-200 text-sm">{c.text}</p>
-        </div>
+    {/* Nested Comment Tree */}
+    <div className="space-y-4">
+      {commentTree.map((root) => (
+        <CommentItem 
+          key={root.$id}
+          comment={root}
+          onReply={(id) => setReplyTo(id)}
+          onEdit = {handleEditComment}
+          onDelete = {handleDeleteComment}
+        />
       ))}
     </div>
   </div>

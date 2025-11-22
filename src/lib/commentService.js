@@ -1,12 +1,14 @@
 
 import { Permission, Query } from "appwrite";
 import { databases , ID } from "./appwrite";
+// import { data } from "react-router-dom";
 
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const COMMENTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_COMMENTS_COLLECTION_ID;
 
 // create a comment
-export async function createComment(postId , user , text){
+// modifying the create comment feature to support the nested replies
+export async function createComment(postId , user , text , parentId = null){
   return await databases.createDocument(
     DATABASE_ID,
     COMMENTS_COLLECTION_ID,
@@ -17,6 +19,7 @@ export async function createComment(postId , user , text){
       username: user.name,
       avatarUrl: user.avatarUrl || null,
       text,
+      parentId,
       createdAt: new Date().toISOString(),
     }
   );
@@ -61,6 +64,26 @@ export async function editComment(commentId , newText){
     return updated;
   }catch (err){
     console.log("Edit comment error : ", err);
+    throw err;
+  }
+}
+
+
+// update Comment edit
+export async function updateComment(commentId , newText){
+  try {
+    const updated = await databases.updateDocument(
+      DATABASE_ID,
+      COMMENTS_COLLECTION_ID,
+      commentId,
+      {
+        text: newText,
+        updatedAt: new Date().toISOString(),
+      }
+    );
+    return updated;
+  } catch(err){
+    console.error("updating comment error : ",err);
     throw err;
   }
 }
