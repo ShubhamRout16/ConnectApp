@@ -119,3 +119,37 @@
     @apply bg-background text-foreground;
   }
 }
+
+body {
+  background-color: #050508;
+  color: #e2e8f0;
+  font-family: 'Outfit', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6, .font-mono {
+  font-family: 'Fira Mono', monospace;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #8b5cf6;
+}
+
+.bg-cosmic-gradient {
+  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0a0a0a 60%);
+}
+
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}

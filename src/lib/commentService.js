@@ -1,7 +1,5 @@
-
-import { Permission, Query } from "appwrite";
+import { Query } from "appwrite";
 import { databases , ID } from "./appwrite";
-// import { data } from "react-router-dom";
 
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const COMMENTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_COMMENTS_COLLECTION_ID;

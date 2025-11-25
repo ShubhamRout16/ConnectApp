@@ -20,6 +20,7 @@ export default function PostCard({ post }) {
   const [showComments , setShowComments] = useState(false);
   const [replyTo , setReplyTo] = useState(null);
 
+  // on mount load the existing comments
   useEffect(() => {
     async function loadComments() {
       const res = await getComments(post.$id);

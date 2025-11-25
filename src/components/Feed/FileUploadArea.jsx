@@ -1,5 +1,7 @@
+/* eslint-disable no-unused-vars */
 import React, { useRef, useState } from "react"
 import { UploadCloud } from "lucide-react"
+import { motion } from "framer-motion"
 
 const FileUploadArea = ({ onFileSelect }) => {
   const [isDragging, setIsDragging] = useState(false)
