@@ -3,8 +3,10 @@ import Avatar from "@/components/ui/Avatar";
 import { Image, BarChart2, Smile, MapPin } from "lucide-react";
 import { CURRENT_USER } from "@/constant";
 import GlassCard from "@/components/ui/GlassCard";
+import { useAuth } from "@/context/useAuth";
 
 export default function CompactCreatePost() {
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   return (
@@ -16,13 +18,13 @@ export default function CompactCreatePost() {
       {/* Top row */}
       <div className="flex items-center gap-3 mb-4">
         <Avatar
-          src={CURRENT_USER.avatarUrl}
-          alt={CURRENT_USER.name}
+          src={user.avatarUrl || "https://picsum.photos/id/64/200/200"}
+          alt={user.name}
           size="md"
           hasStory={true}
         />
         <p className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
-          What's on your mind, {CURRENT_USER.name.split(" ")[0]}?
+          What's on your mind, {user.name.split(" ")[0]}?
         </p>
       </div>
 
