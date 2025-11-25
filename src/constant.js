@@ -23,13 +23,13 @@ export const CURRENT_USER = {
 }
 
 export const NAV_ITEMS = [
-  { label: "Home", icon: Home, path: "#home" },
-  { label: "Explore", icon: Compass, path: "#explore" },
-  { label: "Create", icon: PlusSquare, path: "#create" },
-  { label: "Messages", icon: MessageCircle, path: "#messages", badge: 3 },
-  { label: "Notifications", icon: Bell, path: "#notifications" },
-  { label: "Profile", icon: User, path: "#profile" },
-  { label: "Settings", icon: Settings, path: "#settings" }
+  { label: "Home", icon: Home, path: "/" },
+  { label: "Explore", icon: Compass, path: "/explore" },
+  { label: "Create", icon: PlusSquare, path: "/create-post" },
+  { label: "Messages", icon: MessageCircle, path: "/messages", badge: 3 },
+  { label: "Notifications", icon: Bell, path: "/notifications" },
+  { label: "Profile", icon: User, path: "/profile" },
+  { label: "Settings", icon: Settings, path: "/settings" }
 ]
 
 export const SUGGESTED_USERS = [

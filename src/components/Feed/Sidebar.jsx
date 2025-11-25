@@ -3,6 +3,7 @@ import { NAV_ITEMS, CURRENT_USER } from "../../constant"
 import GlassCard from "../ui/GlassCard"
 import Avatar from "../ui/Avatar"
 import { Zap, ChevronRight } from "lucide-react"
+import { Link } from "react-router-dom"
 
 const Sidebar = () => {
   const [activeTab, setActiveTab] = useState("Home")
@@ -10,6 +11,7 @@ const Sidebar = () => {
   return (
     <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 py-6 pl-6 pr-2 gap-6">
       {/* Logo */}
+      <Link to="/">
       <div className="flex items-center gap-3 px-4 mb-2 group cursor-pointer">
         <div className="relative">
           <div className="absolute inset-0 bg-neon-purple blur-lg opacity-40 group-hover:opacity-70 transition-opacity duration-500"></div>
@@ -21,12 +23,14 @@ const Sidebar = () => {
           CONNECT
         </h1>
       </div>
+      </Link>
 
       {/* Navigation */}
       <div className="flex-1 flex flex-col gap-2">
         {NAV_ITEMS.map(item => {
           const isActive = activeTab === item.label
           return (
+            <Link to={item.path}>
             <button
               key={item.label}
               onClick={() => setActiveTab(item.label)}
@@ -69,6 +73,7 @@ const Sidebar = () => {
                 </span>
               )}
             </button>
+            </Link>
           )
         })}
       </div>
