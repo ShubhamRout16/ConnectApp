@@ -12,16 +12,13 @@ export default {
         mono: ["Fira Mono", "monospace"]
       },
       colors: {
-        cosmic: {
-          950: "#0a0a0a",
-          900: "#0f172a",
-          800: "#1e1e2e",
-          glass: "rgba(15, 23, 42, 0.6)"
+        ccolors: {
+          'neon-purple': '#8b5cf6',
+          'neon-fuchsia': '#d946ef',
+          'cosmic-bg': '#050508'
         },
-        neon: {
-          purple: "#8b5cf6",
-          fuchsia: "#d946ef",
-          cyan: "#06b6d4"
+        backgroundImage: {
+          'cosmic-gradient': 'radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0a0a0a 60%)',
         }
       },
       animation: {

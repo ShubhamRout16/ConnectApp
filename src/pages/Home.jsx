@@ -3,6 +3,7 @@ import { useAuth } from "../context/useAuth";
 import { useNavigate } from "react-router-dom";
 import { getAllPosts } from "@/lib/postService";
 import PostCard from "@/components/PostCard";
+import CompactCreatePost from "@/components/Feed/CompactCreatePost";
 
 export default function Home() {
   const { user } = useAuth();
@@ -52,7 +53,7 @@ export default function Home() {
   return (
     <div className="min-h-screen p-6 text-white max-w-3xl mx-auto space-y-6">
       <h1 className="text-3xl font-bold mb-6">Home Feed</h1>
-
+      <CompactCreatePost/>
       {posts.length ===0  ? (
         <p className="text-gray-400">No posts yet. Create One!</p>
       ) : (

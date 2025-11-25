@@ -1,90 +1,97 @@
-import { getImagePreview } from "@/lib/postService";
 import { useEffect, useState } from "react";
-import { toggleLike } from "@/lib/postService";
+import { getImagePreview, toggleLike } from "@/lib/postService";
 import { useAuth } from "@/context/useAuth";
-import { getComments , createComment, deleteComment , updateComment} from "@/lib/commentService";
-import CommentMenu from "./commentMenu";
+import {
+  getComments,
+  createComment,
+  deleteComment,
+  updateComment,
+} from "@/lib/commentService";
+
 import CommentItem from "./CommentItem";
+import GlassCard from "@/components/ui/GlassCard";
+import Avatar from "@/components/ui/Avatar";
+
+import {
+  Heart,
+  MessageCircle,
+  MoreHorizontal,
+  Bookmark,
+  Share2,
+} from "lucide-react";
+
 
 export default function PostCard({ post }) {
-  const [imageUrl , setImageUrl] = useState("");
-
-  // for the like feature
   const { user } = useAuth();
-  const [likes , setLikes] = useState(post.likes || []);
+
+  const [imageUrl, setImageUrl] = useState("");
+  const [likes, setLikes] = useState(post.likes || []);
+  const [comments, setComments] = useState([]);
+  const [commentText, setCommentText] = useState("");
+  const [showComments, setShowComments] = useState(false);
+  const [replyTo, setReplyTo] = useState(null);
+
   const isLiked = likes.includes(user.$id);
 
-  // for the comment system features
-  const [comments , setComments] = useState([]);
-  const [commentText , setCommentText] = useState("");
-  const [showComments , setShowComments] = useState(false);
-  const [replyTo , setReplyTo] = useState(null);
-
-  // on mount load the existing comments
+  // Load comments on mount
   useEffect(() => {
-    async function loadComments() {
+    async function load() {
       const res = await getComments(post.$id);
       setComments(res.documents);
     }
-    loadComments();
-  } , [post.$id]); 
+    load();
+  }, [post.$id]);
 
-  const handleAddComment = async (parentId = null) => {
-    if(!commentText.trim()) return;
-
-    const newC = await createComment(post.$id , user , commentText , parentId);
-    setComments(prev => [...prev, newC]);
-    setCommentText("");
-    setReplyTo(null);
-  };
-
-  // delete comment persistent
-  const handleDeleteComment = async (id) =>{
-    await deleteComment(id);
-    setComments((prev) => prev.filter((c) => c.$id !== id));
-  }
-
-  // edit comment persistent
-  const handleEditComment = async (updated) => {
-    const saved = await updateComment(updated.$id , updated.text);
-
-    setComments((prev) => prev.map((c) => (c.$id === saved.$id ? saved : c)));
-  };
-
-  const handleLike = async () => {
-    try {
-      const updated = await toggleLike(post.$id , user.$id , likes);
-      setLikes(updated.likes);
-    } catch(err) {
-      console.log("Like error : " , err);
-    }
-  };
-
+  // Load image
   useEffect(() => {
     async function loadImage() {
       const url = await getImagePreview(post.imageId);
       setImageUrl(url);
-      console.log("Final URL:", url);
     }
-
     if (post.imageId) loadImage();
   }, [post.imageId]);
 
-  // building the nested comment feature
-  function buildCommentTree(comments){
+  // Add comment
+  const handleAddComment = async (parentId = null) => {
+    if (!commentText.trim()) return;
+
+    const newC = await createComment(post.$id, user, commentText, parentId);
+    setComments((prev) => [...prev, newC]);
+    setCommentText("");
+    setReplyTo(null);
+  };
+
+  // Delete comment persistent
+  const handleDeleteComment = async (id) => {
+    await deleteComment(id);
+    setComments((prev) => prev.filter((c) => c.$id !== id));
+  };
+
+  // Edit comment persistent
+  const handleEditComment = async (updated) => {
+    const saved = await updateComment(updated.$id, updated.text);
+    setComments((prev) =>
+      prev.map((c) => (c.$id === saved.$id ? saved : c))
+    );
+  };
+
+  // Like toggle
+  const handleLike = async () => {
+    const updated = await toggleLike(post.$id, user.$id, likes);
+    setLikes(updated.likes);
+  };
+
+  // Build nested tree
+  function buildCommentTree(comments) {
     const map = {};
     const roots = [];
 
-    // initialising the map
-    comments.forEach(c => {
-      map[c.$id] = {...c , replies: []};
-    });
+    comments.forEach((c) => (map[c.$id] = { ...c, replies: [] }));
 
-    // build tree
-    comments.forEach(c => {
-      if(c.parentId){
-        map[c.parentId].replies.push(map[c.$id]);
-      }else {
+    comments.forEach((c) => {
+      if (c.parentId) {
+        map[c.parentId]?.replies.push(map[c.$id]);
+      } else {
         roots.push(map[c.$id]);
       }
     });
@@ -93,89 +100,143 @@ export default function PostCard({ post }) {
   }
 
   const commentTree = buildCommentTree(comments);
-  
+
   return (
-    <div className="bg-white/5 backdrop-blue-xl rounded-xl p-4 border border-white/10 shadow-xl"> 
-      {/* render only after URL is ready */}
-      {imageUrl ? (
-        <img
-          src={imageUrl}
-          alt="post"
-          className="w-full rounded-xl object-cover mb-4"
-        />
-      ) : (
-        <div className="w-full h-48 rounded-xl bg-white/10 animate-pulse" />
-      )}
-      
-      {/* caption */}
-      <p className="text-gray-300 mb-2">{post.caption}</p>
+    <GlassCard className="mb-10 p-6 hoverEffect">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-5">
+        <div className="flex gap-3">
+          <Avatar src={user?.avatarUrl || "https://picsum.photos/id/65/200/200"} alt="user" size="md" />
 
-      <button 
-        onClick={handleLike}
-        className={`flex items-center gap-2 px-3 py-1 rounded-full 
-        transition-all ${isLiked ? "bg-purple-600/30 text-purple-300" : "text-gray-400 hover:text-purple-300"}`}
-      >
-      <span className="text-lg">{isLiked ? "💜" : "🤍"}</span>
-      <span>{likes.length}</span>
-      </button>
+          <div>
+            <h3 className="font-bold text-slate-100 text-base cursor-pointer hover:text-neon-purple transition">
+              {post.username || "Unknown User"}
+            </h3>
+            <p className="text-xs font-mono text-slate-400">
+              @{post.userId.slice(0, 6)} •{" "}
+              <span className="text-slate-500">
+                {new Date(post.createdAt).toLocaleDateString()}
+              </span>
+            </p>
+          </div>
+        </div>
 
-      <button
-        onClick={() => setShowComments(!showComments)}
-        className="text-sm text-gray-300 hover:text-white"
-      >
-      💬 {comments.length} Comments
-      </button>
-
-      {showComments && (
-  <div className="mt-3 p-3 rounded-lg bg-white/5 border border-white/10">
-
-    {/* Comment Input */}
-    <div className="flex items-center gap-2 mb-4">
-      <input
-        value={commentText}
-        onChange={(e) => setCommentText(e.target.value)}
-        placeholder="Write a comment..."
-        className="flex-1 px-3 py-2 rounded bg-black/30 text-white outline-none"
-      />
-      <button
-        onClick={() => handleAddComment(replyTo)}
-        className="px-4 py-2 bg-violet-600 hover:bg-violet-700 rounded text-white"
-      >
-        Post
-      </button>
-    </div>
-
-    {replyTo && (
-      <div className="text-sm text-violet-300 mb-2">
-        Replying to comment #{replyTo} 
-        <button
-          className="ml-2 text-red-400"
-          onClick={() => setReplyTo(null)}
-        >
-          Cancel
+        <button className="text-slate-500 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+          <MoreHorizontal className="w-5 h-5" />
         </button>
       </div>
-    )}
 
-    {/* Nested Comment Tree */}
-    <div className="space-y-4">
-      {commentTree.map((root) => (
-        <CommentItem 
-          key={root.$id}
-          comment={root}
-          onReply={(id) => setReplyTo(id)}
-          onEdit = {handleEditComment}
-          onDelete = {handleDeleteComment}
-        />
-      ))}
-    </div>
-  </div>
-)}
-      {/* Meta */}
-      <div className="text-sm text-gray-500 flex justify-between">
-        <span>@{post.userId.slice(0,6)}</span>
-        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+      {/* Caption */}
+      <p className="text-slate-200 mb-4 text-[15px] leading-7 font-light tracking-wide">
+        {post.caption}
+      </p>
+
+      {/* Media */}
+      {imageUrl && (
+        <div className="mb-5 rounded-2xl overflow-hidden border border-white/10 shadow-xl relative group">
+          <div className="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-60 group-hover:opacity-30 transition duration-500" />
+          <img
+            src={imageUrl}
+            alt="post"
+            className="w-full max-h-[600px] object-cover group-hover:scale-[1.02] transition-transform duration-700"
+          />
+        </div>
+      )}
+
+      {/* Action Bar */}
+      <div className="flex justify-between items-center pt-2 mb-2">
+        <div className="flex gap-3">
+          {/* Like */}
+          <button
+            onClick={handleLike}
+            className="group flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-white transition"
+          >
+            <div
+              className={`p-1.5 rounded-full transition-all ${
+                isLiked
+                  ? "bg-neon-fuchsia/10 text-neon-fuchsia"
+                  : "group-hover:bg-neon-fuchsia/10"
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 transition ${
+                  isLiked ? "fill-current scale-110" : "group-hover:scale-110"
+                }`}
+              />
+            </div>
+            <span className="text-sm font-mono">{likes.length}</span>
+          </button>
+
+          {/* Comments */}
+          <button
+            onClick={() => setShowComments(!showComments)}
+            className="group flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-white transition"
+          >
+            <div className="p-1.5 rounded-full group-hover:bg-neon-purple/10 transition">
+              <MessageCircle className="w-5 h-5 group-hover:scale-110 transition" />
+            </div>
+            <span className="text-sm font-mono">{comments.length}</span>
+          </button>
+
+          {/* Share */}
+          <button className="group flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-white transition">
+            <div className="p-1.5 rounded-full group-hover:bg-green-400/10 transition">
+              <Share2 className="w-5 h-5 group-hover:scale-110 transition" />
+            </div>
+          </button>
+        </div>
+
+        {/* Bookmark */}
+        <button className="p-2.5 rounded-full text-slate-400 hover:text-yellow-400 transition hover:bg-white/10">
+          <Bookmark className="w-5 h-5" />
+        </button>
       </div>
-    </div>
+
+      {/* Comments Section */}
+      <div
+        className={`transition-all duration-500 overflow-hidden ${
+          showComments ? "max-h-[2000px] opacity-100 mt-6" : "max-h-0 opacity-0"
+        }`}
+      >
+        {/* Add comment */}
+        <div className="flex items-center gap-2 mb-4">
+          <input
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Write a comment..."
+            className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white border border-white/10 outline-none"
+          />
+          <button
+            onClick={() => handleAddComment(replyTo)}
+            className="px-4 py-2 rounded-xl bg-neon-purple hover:bg-neon-purple/80 transition text-white font-semibold"
+          >
+            Post
+          </button>
+        </div>
+
+        {/* Reply Indicator */}
+        {replyTo && (
+          <div className="text-sm text-neon-purple mb-2">
+            Replying to comment #{replyTo}
+            <button className="ml-2 text-red-400" onClick={() => setReplyTo(null)}>
+              Cancel
+            </button>
+          </div>
+        )}
+
+        {/* Render comment tree */}
+        <div className="space-y-4">
+          {commentTree.map((root) => (
+            <CommentItem
+              key={root.$id}
+              comment={root}
+              onReply={(id) => setReplyTo(id)}
+              onEdit={handleEditComment}
+              onDelete={handleDeleteComment}
+            />
+          ))}
+        </div>
+      </div>
+    </GlassCard>
   );
 }
