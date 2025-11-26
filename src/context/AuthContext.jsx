@@ -21,28 +21,29 @@ export const AuthProvider = ({ children }) => {
   // Signup
   const signup = async (email, password, name, username) => {
     try {
-      const newAccount = await account.create("unique()", email, password, name);
-
+      const createdAccount = await account.create("unique()", email, password, name);
+      console.log(createdAccount);
       // Login immediately
       await account.createEmailPasswordSession(email, password);
+      const accountUser = await account.get();
 
       // Create user profile document
       await databases.createDocument(
         import.meta.env.VITE_APPWRITE_DATABASE_ID,
         import.meta.env.VITE_APPWRITE_USERS_COLLECTION_ID,
-        "unique()",
+        accountUser.$id,
         {
           name,
           username,
           bio: "",
           avatarUrl: "",
-          userId: newAccount.$id,
+          userId: accountUser.$id,
           email,
         }
       );
 
-      const userData = await account.get();
-      setUser(userData);
+      
+      setUser(accountUser);
     } catch (error) {
       console.error("Signup error:", error);
       throw error;

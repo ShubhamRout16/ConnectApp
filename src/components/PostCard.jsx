@@ -23,7 +23,7 @@ import {
 
 export default function PostCard({ post }) {
   const { user } = useAuth();
-
+  console.log(post);
   const [imageUrl, setImageUrl] = useState("");
   const [likes, setLikes] = useState(post.likes || []);
   const [comments, setComments] = useState([]);
@@ -110,7 +110,7 @@ export default function PostCard({ post }) {
 
           <div>
             <h3 className="font-bold text-slate-100 text-base cursor-pointer hover:text-neon-purple transition">
-              {post.username || "Unknown User"}
+              {post.user?.name || "Unknown User"}
             </h3>
             <p className="text-xs font-mono text-slate-400">
               @{post.userId.slice(0, 6)} •{" "}

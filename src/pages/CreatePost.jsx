@@ -106,14 +106,14 @@ export default function CreatePost() {
         {/* USER INFO */}
         <div className="flex items-center gap-4 mb-6">
           <Avatar
-            src={CURRENT_USER.avatarUrl}
-            alt={CURRENT_USER.name}
+            src={user.avatarUrl || "https://picsum.photos/id/64/200/200"}
+            alt={user.name}
             size="lg"
             hasStory={true}
           />
           <div>
             <h3 className="text-lg font-bold text-slate-100">
-              {CURRENT_USER.name}
+              {user.name}
             </h3>
             <p className="text-sm font-mono text-neon-purple/80">Posting publicly</p>
           </div>

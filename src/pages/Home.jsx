@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { getAllPosts } from "@/lib/postService";
 import PostCard from "@/components/PostCard";
 import CompactCreatePost from "@/components/Feed/CompactCreatePost";
+import { getUserByAccountId } from "@/lib/userService";
 
 export default function Home() {
   const { user } = useAuth();
@@ -13,17 +14,28 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchPosts = async () => {
+    async function loadFeed() {
       try {
-        const res = await getAllPosts();
-        setPosts(res.documents);
-      } catch (err) {
-        console.log(err);
-      } finally {
+        const postRes = await getAllPosts();
+        console.log("postRes : ",postRes);
+        const postsWithUser = await Promise.all(
+        postRes.documents.map(async (post) => {
+          const userDoc = await getUserByAccountId(post.userId);
+          return {
+            ...post,
+            user: userDoc,
+          };
+        })
+      );
+      setPosts(postsWithUser);
+      }catch (err) {
+        console.error("Feed load error : ",err);
+      }finally {
         setLoading(false);
       }
-    };
-    fetchPosts();
+    }
+
+    loadFeed();
   } , []);
 
   if (loading) {

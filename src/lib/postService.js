@@ -39,15 +39,22 @@ export const createPost = async ({ caption , imageId , userId }) => {
 
 //feature for showing all posts from appwrite with image , caption , user and timestamp
 export const getAllPosts = async () => {
-  return await databases.listDocuments(
-    import.meta.env.VITE_APPWRITE_DATABASE_ID,
-    import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
-    [
-      // sort the newest post first
-      // orderDesc is query of appwrite which shows (newest -> oldest)
-      Query.orderDesc("createdAt")
-    ]
-  );
+  try {
+    const res = await databases.listDocuments(
+      import.meta.env.VITE_APPWRITE_DATABASE_ID,
+      import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
+      [
+        // sort the newest post first
+        // orderDesc is query of appwrite which shows (newest -> oldest)
+        Query.orderDesc("createdAt")
+      ]
+    );
+    console.log("Posts fetched : ",res);
+    return res;
+  }catch (err) {
+    console.error("getAllPosts Error : ",err);
+    return { documents: [] };
+  }
 };
 
 // for like feature
