@@ -70,7 +70,11 @@ export default function Home() {
         <p className="text-gray-400">No posts yet. Create One!</p>
       ) : (
         posts.map((post) => (
-          <PostCard key={post.$id} post={post}/>
+          <PostCard
+          key={post.$id} 
+          post={post}
+          onDeleted={(id) => setPosts(prev => prev.filter((p => p.$id !== id)))}
+          />
         ))
       )}
     </div>

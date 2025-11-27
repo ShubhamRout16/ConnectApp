@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getImagePreview, toggleLike } from "@/lib/postService";
+import { deletePost, getImagePreview, toggleLike, updatePost , uploadImage } from "@/lib/postService";
 import { useAuth } from "@/context/useAuth";
 import {
   getComments,
@@ -19,9 +19,13 @@ import {
   Bookmark,
   Share2,
 } from "lucide-react";
+import PostMenu from "./Post/PostMenu";
+import PostEditModal from "./Post/PostEditModal";
+import ConfirmDeleteModal from "./Post/ConfirmDeleteModal";
 
 
-export default function PostCard({ post }) {
+
+export default function PostCard({ post , onDeleted}) {
   const { user } = useAuth();
   console.log(post);
   const [imageUrl, setImageUrl] = useState("");
@@ -32,6 +36,53 @@ export default function PostCard({ post }) {
   const [replyTo, setReplyTo] = useState(null);
 
   const isLiked = likes.includes(user.$id);
+
+  // menu + modals
+  const [isEditOpen , setIsEditOpen ] = useState(false);
+  const [isDeleteOpen , setIsDeleteOpen ] = useState(false);
+  const [saving , setSaving ] = useState(false);
+  const [deleting , setDeleting] = useState(false);
+  const [caption , setCaption] = useState(post.caption);
+
+  const isAuthor = user && user.$id === post.userId;
+
+  const handleSaveEdit = async ({ caption : newCaption , newImageFile}) => {
+    try {
+      setSaving(true);
+
+      let updatedImageId = post.imageId;
+
+      // if user uploaded a new image then upload it
+      if(newImageFile){
+        const uploadedId = await uploadImage(newImageFile);
+        updatedImageId = uploadedId;
+      }
+
+      const res = await updatePost(post.$id , { caption: newCaption, imageId: updatedImageId });
+      // update local Ui
+      setCaption(res.caption);
+      setImageUrl(await getImagePreview(res.imageId));
+      setSaving(false);
+      setIsEditOpen(false);
+    } catch (err) {
+      console.error("Update failed : ", err);
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      setDeleting(true);
+      await deletePost(post.$id);
+      setDeleting(false);
+      setIsDeleteOpen(false);
+      // notify parent to remove from the list
+      if (typeof onDeleted === "function") onDeleted(post.$id);
+    } catch (err) {
+      console.error("Delete failed" , err);
+      setDeleting(false);
+    }
+  };
 
   // Load comments on mount
   useEffect(() => {
@@ -102,6 +153,7 @@ export default function PostCard({ post }) {
   const commentTree = buildCommentTree(comments);
 
   return (
+    <>
     <GlassCard className="mb-10 p-6 hoverEffect">
       {/* Header */}
       <div className="flex justify-between items-start mb-5">
@@ -121,14 +173,24 @@ export default function PostCard({ post }) {
           </div>
         </div>
 
-        <button className="text-slate-500 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
-          <MoreHorizontal className="w-5 h-5" />
-        </button>
+        <div>
+          {/* only show menu if current user is the author */}
+          {isAuthor ? (
+            <PostMenu 
+              onEdit={() => setIsEditOpen(true)}
+              onDelete={() => setIsDeleteOpen(true)}
+            />
+          ) : (
+            <button className="text-slate-500 hover:text-white p-2 rounded-full hover:bg-white/10 transition">
+              <MoreHorizontal className="w-5 h-5"/>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Caption */}
       <p className="text-slate-200 mb-4 text-[15px] leading-7 font-light tracking-wide">
-        {post.caption}
+        {caption}
       </p>
 
       {/* Media */}
@@ -238,5 +300,23 @@ export default function PostCard({ post }) {
         </div>
       </div>
     </GlassCard>
+    
+    {open && (<PostEditModal 
+      key={post.$id + caption +imageUrl}
+      open={isEditOpen}
+      initialText={caption}
+      initialImage={imageUrl}
+      onClose={() => setIsEditOpen(false)}
+      onSave={handleSaveEdit}
+      saving={saving}
+    />)}
+
+    <ConfirmDeleteModal
+      open={isDeleteOpen}
+      onClose={() => setIsDeleteOpen(false)}
+      onConfirm={handleDeleteConfirm}
+      deleting={deleting}
+    />
+    </>
   );
 }

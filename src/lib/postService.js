@@ -78,3 +78,22 @@ export async function toggleLike(postId , userId , currentLikes) {
     }
   );
 }
+
+// feature adding update post and delete 
+export const updatePost = async (postId , payload) => {
+  return await databases.updateDocument(
+    import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
+    postId,
+    payload
+  );
+};
+
+
+export const deletePost = async (postId) => {
+  return await databases.deleteDocument(
+    import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
+    postId,
+  );
+};
