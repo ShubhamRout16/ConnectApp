@@ -23,16 +23,14 @@ import PostMenu from "./Post/PostMenu";
 import PostEditModal from "./Post/PostEditModal";
 import ConfirmDeleteModal from "./Post/ConfirmDeleteModal";
 
-
-
 export default function PostCard({ post , onDeleted}) {
   const { user } = useAuth();
-  console.log(post);
   const [imageUrl, setImageUrl] = useState("");
   const [likes, setLikes] = useState(post.likes || []);
   const [comments, setComments] = useState([]);
   const [commentText, setCommentText] = useState("");
   const [showComments, setShowComments] = useState(false);
+  // replyTo will be object or null: { id: commentId, username: 'Name' }
   const [replyTo, setReplyTo] = useState(null);
 
   const isLiked = likes.includes(user.$id);
@@ -76,7 +74,6 @@ export default function PostCard({ post , onDeleted}) {
       await deletePost(post.$id);
       setDeleting(false);
       setIsDeleteOpen(false);
-      // notify parent to remove from the list
       if (typeof onDeleted === "function") onDeleted(post.$id);
     } catch (err) {
       console.error("Delete failed" , err);
@@ -88,7 +85,7 @@ export default function PostCard({ post , onDeleted}) {
   useEffect(() => {
     async function load() {
       const res = await getComments(post.$id);
-      setComments(res.documents);
+      setComments(res.documents || []);
     }
     load();
   }, [post.$id]);
@@ -102,23 +99,25 @@ export default function PostCard({ post , onDeleted}) {
     if (post.imageId) loadImage();
   }, [post.imageId]);
 
-  // Add comment
-  const handleAddComment = async (parentId = null) => {
+  // Add comment (parentId can be string id OR object; support both)
+  const handleAddComment = async (parent = null) => {
     if (!commentText.trim()) return;
+
+    const parentId = parent ? (typeof parent === "string" ? parent : parent.id) : null;
 
     const newC = await createComment(post.$id, user, commentText, parentId);
     setComments((prev) => [...prev, newC]);
     setCommentText("");
     setReplyTo(null);
+    // ensure comments are visible after posting
+    setShowComments(true);
   };
 
-  // Delete comment persistent
   const handleDeleteComment = async (id) => {
     await deleteComment(id);
     setComments((prev) => prev.filter((c) => c.$id !== id));
   };
 
-  // Edit comment persistent
   const handleEditComment = async (updated) => {
     const saved = await updateComment(updated.$id, updated.text);
     setComments((prev) =>
@@ -126,22 +125,21 @@ export default function PostCard({ post , onDeleted}) {
     );
   };
 
-  // Like toggle
   const handleLike = async () => {
     const updated = await toggleLike(post.$id, user.$id, likes);
     setLikes(updated.likes);
   };
 
   // Build nested tree
-  function buildCommentTree(comments) {
+  function buildCommentTree(commentsArr) {
     const map = {};
     const roots = [];
 
-    comments.forEach((c) => (map[c.$id] = { ...c, replies: [] }));
+    commentsArr.forEach((c) => (map[c.$id] = { ...c, replies: [] }));
 
-    comments.forEach((c) => {
-      if (c.parentId) {
-        map[c.parentId]?.replies.push(map[c.$id]);
+    commentsArr.forEach((c) => {
+      if (c.parentId && map[c.parentId]) {
+        map[c.parentId].replies.push(map[c.$id]);
       } else {
         roots.push(map[c.$id]);
       }
@@ -158,14 +156,14 @@ export default function PostCard({ post , onDeleted}) {
       {/* Header */}
       <div className="flex justify-between items-start mb-5">
         <div className="flex gap-3">
-          <Avatar src={user?.avatarUrl || "https://picsum.photos/id/65/200/200"} alt="user" size="md" />
+          <Avatar src={post.user?.avatarUrl || "https://picsum.photos/id/65/200/200"} alt={post.user?.name || "user"} size="md" />
 
           <div>
             <h3 className="font-bold text-slate-100 text-base cursor-pointer hover:text-neon-purple transition">
               {post.user?.name || "Unknown User"}
             </h3>
             <p className="text-xs font-mono text-slate-400">
-              @{post.userId.slice(0, 6)} •{" "}
+              @{(post.user?.username) ? post.user.username : post.userId.slice(0, 6)} •{" "}
               <span className="text-slate-500">
                 {new Date(post.createdAt).toLocaleDateString()}
               </span>
@@ -174,7 +172,6 @@ export default function PostCard({ post , onDeleted}) {
         </div>
 
         <div>
-          {/* only show menu if current user is the author */}
           {isAuthor ? (
             <PostMenu 
               onEdit={() => setIsEditOpen(true)}
@@ -208,7 +205,6 @@ export default function PostCard({ post , onDeleted}) {
       {/* Action Bar */}
       <div className="flex justify-between items-center pt-2 mb-2">
         <div className="flex gap-3">
-          {/* Like */}
           <button
             onClick={handleLike}
             className="group flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-white transition"
@@ -229,7 +225,6 @@ export default function PostCard({ post , onDeleted}) {
             <span className="text-sm font-mono">{likes.length}</span>
           </button>
 
-          {/* Comments */}
           <button
             onClick={() => setShowComments(!showComments)}
             className="group flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-white transition"
@@ -240,7 +235,6 @@ export default function PostCard({ post , onDeleted}) {
             <span className="text-sm font-mono">{comments.length}</span>
           </button>
 
-          {/* Share */}
           <button className="group flex items-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:text-white transition">
             <div className="p-1.5 rounded-full group-hover:bg-green-400/10 transition">
               <Share2 className="w-5 h-5 group-hover:scale-110 transition" />
@@ -248,7 +242,6 @@ export default function PostCard({ post , onDeleted}) {
           </button>
         </div>
 
-        {/* Bookmark */}
         <button className="p-2.5 rounded-full text-slate-400 hover:text-yellow-400 transition hover:bg-white/10">
           <Bookmark className="w-5 h-5" />
         </button>
@@ -260,29 +253,54 @@ export default function PostCard({ post , onDeleted}) {
           showComments ? "max-h-[2000px] opacity-100 mt-6" : "max-h-0 opacity-0"
         }`}
       >
-        {/* Add comment */}
+        {/* Main Add comment row (always present) */}
         <div className="flex items-center gap-2 mb-4">
           <input
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Write a comment..."
+            placeholder={replyTo ? `Replying to @${replyTo.username}...` : "Write a comment..."}
             className="flex-1 px-3 py-2 rounded-lg bg-white/5 text-white border border-white/10 outline-none"
           />
           <button
-            onClick={() => handleAddComment(replyTo)}
+            onClick={() => handleAddComment(replyTo ? replyTo.id : null)}
             className="px-4 py-2 rounded-xl bg-neon-purple hover:bg-neon-purple/80 transition text-white font-semibold"
           >
-            Post
+            {replyTo ? "Reply" : "Post"}
           </button>
         </div>
 
-        {/* Reply Indicator */}
+        {/* Inline Reply Box (looks like the reference) */}
         {replyTo && (
-          <div className="text-sm text-neon-purple mb-2">
-            Replying to comment #{replyTo}
-            <button className="ml-2 text-red-400" onClick={() => setReplyTo(null)}>
-              Cancel
-            </button>
+          <div className="ml-12 mb-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-3 flex flex-col gap-3">
+              <p className="text-sm text-slate-300 font-mono">
+                Replying to <span className="text-neon-purple font-semibold">@{replyTo.username}</span>
+              </p>
+
+              <textarea
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                placeholder={`Reply to @${replyTo.username}...`}
+                className="w-full px-4 py-3 rounded-xl bg-black/30 text-white border border-white/10 focus:border-neon-purple/40 outline-none resize-none font-mono"
+                rows={2}
+              />
+
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => { setReplyTo(null); setCommentText(""); }}
+                  className="text-sm font-mono px-4 py-1.5 rounded-lg bg-white/5 text-slate-300 hover:text-white hover:bg-white/10 transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={() => handleAddComment(replyTo)}
+                  className="text-sm font-mono px-4 py-1.5 rounded-lg bg-neon-purple hover:bg-neon-purple/80 transition text-white font-semibold"
+                >
+                  Reply
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -292,7 +310,12 @@ export default function PostCard({ post , onDeleted}) {
             <CommentItem
               key={root.$id}
               comment={root}
-              onReply={(id) => setReplyTo(id)}
+              onReply={(commentObj) => {
+                // commentObj is the comment passed from CommentItem
+                const username = commentObj.user?.name || commentObj.username || `user${commentObj.$id.slice(0,6)}`;
+                setReplyTo({ id: commentObj.$id, username });
+                // populate input placeholder and focus would be handled by UI
+              }}
               onEdit={handleEditComment}
               onDelete={handleDeleteComment}
             />
@@ -300,8 +323,8 @@ export default function PostCard({ post , onDeleted}) {
         </div>
       </div>
     </GlassCard>
-    
-    {open && (<PostEditModal 
+
+    <PostEditModal 
       key={post.$id + caption +imageUrl}
       open={isEditOpen}
       initialText={caption}
@@ -309,7 +332,7 @@ export default function PostCard({ post , onDeleted}) {
       onClose={() => setIsEditOpen(false)}
       onSave={handleSaveEdit}
       saving={saving}
-    />)}
+    />
 
     <ConfirmDeleteModal
       open={isDeleteOpen}

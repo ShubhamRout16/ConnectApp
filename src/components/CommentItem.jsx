@@ -12,18 +12,19 @@ export default function CommentItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
 
+  // logged-in user
+  const localUser = JSON.parse(localStorage.getItem("user"));
+  const isOwnComment = comment.userId === localUser?.$id;
+
   const handleSave = () => {
     const updated = { ...comment, text: editText };
     onEdit(updated);
     setIsEditing(false);
   };
 
-  const isOwnComment =
-    comment.userId === JSON.parse(localStorage.getItem("user"))?.$id;
-
   return (
     <div className={`flex gap-3 mb-5 group ${isReply ? "ml-12 relative" : ""}`}>
-      {/* Vertical reply line */}
+      {/* Left vertical line for replies */}
       {isReply && (
         <div className="absolute -left-6 top-0 bottom-0 w-px bg-linear-to-b from-slate-800 to-transparent" />
       )}
@@ -35,18 +36,21 @@ export default function CommentItem({
         size="sm"
       />
 
+      {/* Right Side */}
       <div className="flex-1">
-        {/* User + Timestamp */}
+
+        {/* Username + Timestamp */}
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-slate-200 hover:text-neon-purple transition cursor-pointer">
+          <span className="text-sm font-bold text-slate-200 hover:text-neon-purple cursor-pointer transition">
             {comment.username}
           </span>
+
           <span className="text-xs text-slate-500 font-mono">
             {new Date(comment.createdAt).toLocaleDateString()}
           </span>
         </div>
 
-        {/* COMMENT TEXT */}
+        {/* Comment Text / Edit Mode */}
         {isEditing ? (
           <div className="mt-2">
             <input
@@ -54,6 +58,7 @@ export default function CommentItem({
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
             />
+
             <div className="flex gap-4 mt-2 text-xs">
               <button
                 onClick={handleSave}
@@ -61,9 +66,10 @@ export default function CommentItem({
               >
                 Save
               </button>
+
               <button
                 onClick={() => setIsEditing(false)}
-                className="text-red-400"
+                className="text-red-400 hover:text-red-300"
               >
                 Cancel
               </button>
@@ -75,25 +81,26 @@ export default function CommentItem({
           </p>
         )}
 
-        {/* ACTION BUTTONS */}
+        {/* Actions */}
         {!isEditing && (
           <div className="flex gap-4 mt-2 text-xs font-medium text-slate-500">
-            {/* Like (UI only, no logic in your system yet) */}
+
+            {/* Like (still UI only) */}
             <button className="flex items-center gap-1 hover:text-neon-fuchsia transition">
               <Heart className="w-3.5 h-3.5" />
               Like
             </button>
 
-            {/* Reply */}
+            {/* Reply - IMPORTANT: send entire comment object */}
             <button
-              onClick={() => onReply(comment.$id)}
+              onClick={() => onReply(comment)}
               className="flex items-center gap-1 hover:text-neon-purple transition"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               Reply
             </button>
 
-            {/* Edit */}
+            {/* Edit button (only if own comment) */}
             {isOwnComment && (
               <button
                 onClick={() => setIsEditing(true)}
@@ -104,7 +111,7 @@ export default function CommentItem({
               </button>
             )}
 
-            {/* Delete */}
+            {/* Delete button */}
             {isOwnComment && (
               <button
                 onClick={() => onDelete(comment.$id)}
@@ -117,7 +124,7 @@ export default function CommentItem({
           </div>
         )}
 
-        {/* REPLIES (recursive) */}
+        {/* CHILD REPLIES */}
         {comment.replies?.length > 0 && (
           <div className="mt-4">
             {comment.replies.map((reply) => (
