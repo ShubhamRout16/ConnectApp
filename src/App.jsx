@@ -6,6 +6,7 @@ import Home from "./pages/Home";
 import ProtectedRoute from "./components/ProtectedRoute";
 import AppLayout from "./layout/AppLayout";
 import CreatePost from "./pages/CreatePost";
+import ProfilePage from "./pages/ProfilePage";
 function App() {
   return (
     <AuthProvider>
@@ -39,6 +40,26 @@ function App() {
           }
         />
         {/* profile page route */}
+        <Route 
+          path="/profile/me"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ProfilePage isMe/>
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route 
+          path="/profile/:userId"
+          element={
+            <ProtectedRoute>
+              <AppLayout>
+                <ProfilePage/>
+              </AppLayout>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </AuthProvider>
   );

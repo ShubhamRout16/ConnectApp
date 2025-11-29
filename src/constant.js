@@ -28,7 +28,7 @@ export const NAV_ITEMS = [
   { label: "Create", icon: PlusSquare, path: "/create-post" },
   { label: "Messages", icon: MessageCircle, path: "/messages", badge: 3 },
   { label: "Notifications", icon: Bell, path: "/notifications" },
-  { label: "Profile", icon: User, path: "/profile" },
+  { label: "Profile", icon: User, path: "/profile/me" },
   { label: "Settings", icon: Settings, path: "/settings" }
 ]
 
