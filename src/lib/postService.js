@@ -1,6 +1,4 @@
-import { ID , storage , databases } from "./appwrite";
-// what is the use Query from the appwrite ?
-// appwrite uses queries like filter , sort and paginate from the backend services primarily the databases
+import { ID, storage, databases } from "./appwrite";
 import { Query } from "appwrite";
 
 export const uploadImage = async (file) => {
@@ -13,16 +11,18 @@ export const uploadImage = async (file) => {
   return uploadedFile.$id;
 };
 
-export const getImagePreview = async (fileId) => {
-  const result = await storage.getFileView(
+export const getImagePreview = (fileId) => {
+  if (!fileId) return "https://picsum.photos/id/64/200/200";
+
+  const url = storage.getFileView(
     import.meta.env.VITE_APPWRITE_BUCKET_ID,
     fileId
   );
-  console.log("Preview Result : ", result);
-  return result;
+
+  return typeof url === "string" ? url : url.href;
 };
 
-export const createPost = async ({ caption , imageId , userId }) => {
+export const createPost = async ({ caption, imageId, userId }) => {
   return await databases.createDocument(
     import.meta.env.VITE_APPWRITE_DATABASE_ID,
     import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
@@ -37,50 +37,50 @@ export const createPost = async ({ caption , imageId , userId }) => {
   );
 };
 
-//feature for showing all posts from appwrite with image , caption , user and timestamp
+// Feature for showing all posts from appwrite with image, caption, user and timestamp
 export const getAllPosts = async () => {
   try {
     const res = await databases.listDocuments(
       import.meta.env.VITE_APPWRITE_DATABASE_ID,
       import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
       [
-        // sort the newest post first
+        // Sort the newest post first
         // orderDesc is query of appwrite which shows (newest -> oldest)
         Query.orderDesc("createdAt")
       ]
     );
-    console.log("Posts fetched : ",res);
+    console.log("Posts fetched:", res);
     return res;
-  }catch (err) {
-    console.error("getAllPosts Error : ",err);
+  } catch (err) {
+    console.error("getAllPosts Error:", err);
     return { documents: [] };
   }
 };
 
-// for like feature
-export async function toggleLike(postId , userId , currentLikes) {
+// For like feature
+export async function toggleLike(postId, userId, currentLikes) {
   let updatedLikes;
 
   if (currentLikes.includes(userId)) {
-    // unlike
+    // Unlike
     updatedLikes = currentLikes.filter(id => id !== userId);
-  }else{
-    // likes
-    updatedLikes = [...currentLikes , userId];
+  } else {
+    // Like
+    updatedLikes = [...currentLikes, userId];
   }
 
   return await databases.updateDocument(
     import.meta.env.VITE_APPWRITE_DATABASE_ID,
     import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
-    postId , 
+    postId,
     {
       likes: updatedLikes
     }
   );
 }
 
-// feature adding update post and delete 
-export const updatePost = async (postId , payload) => {
+// Feature adding update post and delete
+export const updatePost = async (postId, payload) => {
   return await databases.updateDocument(
     import.meta.env.VITE_APPWRITE_DATABASE_ID,
     import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
@@ -89,11 +89,10 @@ export const updatePost = async (postId , payload) => {
   );
 };
 
-
 export const deletePost = async (postId) => {
   return await databases.deleteDocument(
     import.meta.env.VITE_APPWRITE_DATABASE_ID,
     import.meta.env.VITE_APPWRITE_POSTS_COLLECTION_ID,
-    postId,
+    postId
   );
 };

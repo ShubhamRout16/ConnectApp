@@ -156,8 +156,15 @@ export default function PostCard({ post , onDeleted}) {
       {/* Header */}
       <div className="flex justify-between items-start mb-5">
         <div className="flex gap-3">
-          <Avatar src={post.user?.avatarUrl || "https://picsum.photos/id/65/200/200"} alt={post.user?.name || "user"} size="md" />
-
+        <Avatar 
+          src={
+            post.user?.avatarUrl
+              ? getImagePreview(post.user.avatarUrl)
+              : "https://picsum.photos/id/65/200/200"
+          }
+          alt={post.user?.name || "user"}
+          size="md"
+        />
           <div>
             <h3 className="font-bold text-slate-100 text-base cursor-pointer hover:text-neon-purple transition">
               {post.user?.name || "Unknown User"}

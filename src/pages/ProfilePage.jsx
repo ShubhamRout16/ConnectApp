@@ -1,4 +1,3 @@
-
 import React, { useState , useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuth } from '@/context/useAuth';
@@ -9,6 +8,7 @@ import { MapPin, Link as LinkIcon, Calendar, Grid, Image as ImageIcon, Heart, Bo
 import GlassCard from '@/components/ui/GlassCard';
 import Avatar from '@/components/ui/Avatar';
 import { getImagePreview } from '@/lib/postService';
+import EditProfileModal from '@/components/profile/EditProfileModal';
 
 
 const ProfilePage = ({isMe , onBack }) => {
@@ -24,6 +24,8 @@ const ProfilePage = ({isMe , onBack }) => {
     isMe = true;
   }
 
+  const [isEditOpen , setIsEditOpen] = useState(false);
+
   const [profileUser , setProfileUser] = useState(null);
   const [userPosts , setUserPosts] = useState([]);
   const getImage = (id) => getImagePreview(id);
@@ -31,7 +33,9 @@ const ProfilePage = ({isMe , onBack }) => {
   useEffect(() => {
     async function load(){
       const u = await getUserProfile(viewedUserId);
+      console.log("LOADED PROFILE USER:", u);
       const p = await getUserPosts(viewedUserId);
+      console.log("LOADED USER POSTS:", p);
 
       setProfileUser(u);
       setUserPosts(p);
@@ -49,7 +53,22 @@ const ProfilePage = ({isMe , onBack }) => {
     return <div className="text-white p-10">User not found.</div>;
   }
 
+  // FIX: Always get fresh avatar URL from the profileUser object
+  console.log("Profile user avatarUrl field:", profileUser.avatarUrl);
+  
+  const avatarUrl = profileUser.avatarUrl 
+    ? getImagePreview(profileUser.avatarUrl) 
+    : "https://picsum.photos/200";
+    
+  const bannerUrl = profileUser.bannerUrl 
+    ? getImage(profileUser.bannerUrl) 
+    : "https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072";
+  
+  console.log("Avatar URL being rendered:", avatarUrl);
+  console.log("Banner URL being rendered:", bannerUrl);
+
   return (
+    <>
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -68,7 +87,12 @@ const ProfilePage = ({isMe , onBack }) => {
         </div>
 
         {/* Banner Image Overlay */}
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2072&auto=format&fit=crop')] bg-cover bg-center opacity-30 mix-blend-overlay transition-transform duration-1000 group-hover:scale-105"></div>
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-100"
+          style={{
+            backgroundImage: `url(${bannerUrl})`
+          }}
+        ></div>
         <div className="absolute inset-0 bg-linear-to-t from-[#050508] via-[#050508]/60 to-transparent"></div>
       
         {/* Mobile Nav Overlay */}
@@ -91,7 +115,8 @@ const ProfilePage = ({isMe , onBack }) => {
                 <div className="absolute -inset-1 bg-linear-to-tr from-neon-purple via-neon-fuchsia to-neon-cyan rounded-full blur opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
                 <div className="relative p-1 bg-[#050508] rounded-full">
                     <Avatar 
-                        src={profileUser?.avatarUrl || "https://picsum.photos/200"} 
+                        key={`${profileUser.$id}-${profileUser.avatarUrl || 'default'}`}
+                        src={avatarUrl} 
                         alt={profileUser?.name} 
                         size="xl" 
                         className="w-28 h-28 md:w-36 md:h-36 border-4 border-[#050508]" 
@@ -116,9 +141,14 @@ const ProfilePage = ({isMe , onBack }) => {
 
                     {/* Action Buttons */}
                     <div className="flex items-center gap-3">
-                        <button className="px-6 py-2 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]">
+                        {
+                          isMe && <button 
+                          className="px-6 py-2 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                          onClick={() => setIsEditOpen(true)}
+                        >
                             Edit Profile
                         </button>
+                        }
                         <button className="px-6 py-2 rounded-xl bg-white/5 border border-white/10 text-white font-medium text-sm hover:bg-white/10 hover:border-white/20 transition-all">
                             Share
                         </button>
@@ -130,22 +160,33 @@ const ProfilePage = ({isMe , onBack }) => {
         {/* Bio Section */}
         <div className="mt-6 max-w-2xl">
             <p className="text-slate-200 text-[15px] leading-relaxed font-light">
-                {profileUser?.bio} <br/>
-                <span className="text-neon-purple/80">Almighty One</span>
+                <span className="text-neon-purple/80">
+                  {profileUser.bio || "This user has not added a bio yet."}
+                </span>
             </p>
             
             <div className="flex flex-wrap gap-x-6 gap-y-3 mt-4 text-xs font-mono text-slate-500">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/3 border border-white/5">
                     <MapPin className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Punjab, IN</span>
+                    <span>
+                      {profileUser.location || "Unknown Location"}
+                    </span>
                 </div>
-                <a href="#" className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/3 border border-white/5 hover:border-neon-purple/30 hover:text-neon-purple transition-all">
+                <a 
+                  href={profileUser.website || "#"}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/3 border border-white/5 hover:border-neon-purple/30 hover:text-neon-purple transition-all">
                     <LinkIcon className="w-3.5 h-3.5" />
-                    <span>RoutShubh.dev</span>
+                    <span>
+                      {profileUser.website || "No Website"}
+                    </span>
                 </a>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/3 border border-white/5">
                     <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Joined March 2024</span>
+                    <span>
+                      Joined{" "}  {profileUser.joinedAt ? new Date(profileUser.joinedAt).toLocaleDateString("en-US", {month : "long" , year : "numeric"}) : "Unknown"}
+                    </span>
                 </div>
             </div>
         </div>
@@ -238,6 +279,17 @@ const ProfilePage = ({isMe , onBack }) => {
         </AnimatePresence>
       </div>
     </motion.div>
+
+    <EditProfileModal
+      open={isEditOpen}
+      user={profileUser}
+      onClose={() => setIsEditOpen(false)}
+      onUpdated={(newData) => {
+        console.log("Profile updated in modal, refreshing display with:", newData);
+        setProfileUser(newData);
+      }}
+    />
+    </>
   );
 };
 
