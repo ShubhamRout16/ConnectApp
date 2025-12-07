@@ -4,10 +4,30 @@ import { Image, BarChart2, Smile, MapPin } from "lucide-react";
 import { CURRENT_USER } from "@/constant";
 import GlassCard from "@/components/ui/GlassCard";
 import { useAuth } from "@/context/useAuth";
+import { getUserProfile } from "@/lib/profileService";
+import { getImagePreview } from "@/lib/postService";
+import { useEffect , useState } from "react";
 
 export default function CompactCreatePost() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [profileUser , setUserProfile] = useState(null);
+
+  useEffect(() => {
+    async function load(){
+      if(user?.$id){
+        const profile = await getUserProfile(user.$id);
+        setUserProfile(profile);
+        console.log("loaded sidebar profile : ",profile);
+      }
+    }
+    load();
+  }, [user])
+
+  const avatarSrc = profileUser?.avatarUrl ? getImagePreview(profileUser.avatarUrl) : "https://picsum.photos/id/64/200/200";
+  console.log(profileUser);
+  console.log(profileUser?.avatarUrl);
+  console.log(avatarSrc);
 
   return (
     <GlassCard
@@ -18,8 +38,8 @@ export default function CompactCreatePost() {
       {/* Top row */}
       <div className="flex items-center gap-3 mb-4">
         <Avatar
-          src={user.avatarUrl || "https://picsum.photos/id/64/200/200"}
-          alt={user.name}
+          src={avatarSrc}
+          alt={profileUser?.name || user?.name || "User"}
           size="md"
           hasStory={true}
         />

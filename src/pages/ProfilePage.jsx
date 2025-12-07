@@ -111,23 +111,27 @@ const ProfilePage = ({isMe , onBack }) => {
         <div className="flex flex-col md:flex-row items-end md:items-end gap-6">
             
             {/* Avatar with Neon Rings */}
-            <div className="relative group">
-                <div className="absolute -inset-1 bg-linear-to-tr from-neon-purple via-neon-fuchsia to-neon-cyan rounded-full blur opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
-                <div className="relative p-1 bg-[#050508] rounded-full">
-                    <Avatar 
-                        key={`${profileUser.$id}-${profileUser.avatarUrl || 'default'}`}
-                        src={avatarUrl} 
-                        alt={profileUser?.name} 
-                        size="xl" 
-                        className="w-28 h-28 md:w-36 md:h-36 border-4 border-[#050508]" 
-                    />
-                </div>
-                {/* Status Indicator */}
-                <div className="absolute bottom-2 right-2 w-6 h-6 bg-[#050508] rounded-full flex items-center justify-center">
-                    <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-[#050508] animate-pulse"></div>
-                </div>
-            </div>
-
+              <div className="relative group">
+              {/* Neon glow effect */}
+              <div className="absolute -inset-1 bg-linear-to-tr from-purple-500 via-fuchsia-500 to-cyan-500 rounded-full blur opacity-70 group-hover:opacity-100 transition-opacity duration-500"></div>
+              
+              {/* Avatar container - acts as the border */}
+              <div className="relative w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden bg-[#050508] p-1">
+                  <div className="w-full h-full rounded-full overflow-hidden">
+                      <img 
+                          key={`${profileUser.$id}-${profileUser.avatarUrl || 'default'}`}
+                          src={avatarUrl} 
+                          alt={profileUser?.name}
+                          className="w-full h-full object-cover"
+                      />
+                  </div>
+              </div>
+              
+              {/* Status Indicator */}
+              <div className="absolute bottom-2 right-2 w-6 h-6 bg-[#050508] rounded-full flex items-center justify-center">
+                  <div className="w-4 h-4 bg-green-500 rounded-full border-2 border-[#050508] animate-pulse"></div>
+              </div>
+          </div>
             {/* Actions & Names */}
             <div className="flex-1 pb-2 w-full">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -143,7 +147,7 @@ const ProfilePage = ({isMe , onBack }) => {
                     <div className="flex items-center gap-3">
                         {
                           isMe && <button 
-                          className="px-6 py-2 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]"
+                          className="px-4 py-2 rounded-xl bg-white text-black font-bold text-sm hover:bg-slate-200 transition-colors shadow-[0_0_20px_rgba(255,255,255,0.1)]"
                           onClick={() => setIsEditOpen(true)}
                         >
                             Edit Profile

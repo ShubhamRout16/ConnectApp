@@ -1,14 +1,28 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { NAV_ITEMS, CURRENT_USER } from "../../constant"
 import GlassCard from "../ui/GlassCard"
 import Avatar from "../ui/Avatar"
 import { Zap, ChevronRight , LogOut} from "lucide-react"
 import { Link } from "react-router-dom"
 import { useAuth } from "@/context/useAuth"
+import { getImagePreview } from "@/lib/postService"
+import { getUserProfile } from "@/lib/profileService"
 
 const Sidebar = () => {
   const [activeTab, setActiveTab] = useState("Home");
   const { user , logout } = useAuth();
+  const [profileUser , setUserProfile] = useState(null);
+
+  useEffect(() => {
+    async function load(){
+      if(user?.$id){
+        const profile = await getUserProfile(user.$id);
+        setUserProfile(profile);
+        console.log("loaded sidebar profile : ",profile);
+      }
+    }
+    load();
+  }, [user])
 
   const handleSignOut = async () => {
     try {
@@ -18,7 +32,12 @@ const Sidebar = () => {
       console.error("Logout failed : ", err);
     }
   };
- 
+  
+  const avatarSrc = profileUser?.avatarUrl ? getImagePreview(profileUser.avatarUrl) : "https://picsum.photos/id/64/200/200";
+  console.log(profileUser);
+  console.log(profileUser?.avatarUrl);
+  console.log(avatarSrc);
+
   return (
     <aside className="hidden lg:flex flex-col w-72 h-screen sticky top-0 py-6 pl-6 pr-2 gap-6">
       {/* Logo */}
@@ -101,24 +120,26 @@ const Sidebar = () => {
 
 
       {/* User Profile Card */}
+      <Link to="/profile/me">
       <GlassCard className="p-3 hover:bg-white/5 cursor-pointer group border-white/5 hover:border-neon-purple/30 transition-all duration-300">
         <div className="flex items-center gap-3">
           <Avatar
-            src={user.avatarUrl || "https://picsum.photos/id/64/200/200"}
-            alt={user.name}
+            src={avatarSrc}
+            alt={profileUser?.name || user?.name || "User"}
             hasStory={true}
           />
           <div className="flex-1 min-w-0">
             <p className="text-sm font-bold text-white truncate group-hover:text-neon-purple transition-colors">
-              {user.name}
+            {profileUser?.name || user?.name || "Loading..."}
             </p>
             <p className="text-xs text-slate-400 truncate font-mono">
-              {user.username || `@${user.name}`}
+            {profileUser?.username || user?.username || `@${user?.name || "user"}`}
             </p>
           </div>
           <ChevronRight className="w-4 h-4 text-slate-500 group-hover:text-white transition-colors" />
         </div>
       </GlassCard>
+      </Link>
     </aside>
   )
 }
